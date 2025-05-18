@@ -34,7 +34,7 @@ BRAZIL_STATES = {
 
 @st.cache_data
 def load_data():
-    return pd.read_csv('from_model_opt.csv')
+    return pd.read_csv('final_mb.csv',encoding="utf-8", sep=",", decimal=".")
 
 df = load_data()
 
@@ -43,32 +43,34 @@ col1, col2 = st.columns([1.5, 3])
 with col1:
     client_id = st.selectbox(
     "Выберите клиента",
-    sorted(df['customer_id'].unique()),
+    df['customer_unique_id'].unique(),
     key="client_select"
     )
     
     st.subheader("📋 Информация о клиенте")
-    client_data=df[df['customer_id']==client_id]
-    avg_price=client_data['price'].mean()
-    state=BRAZIL_STATES.get(client_data['state'].to_string(index=False).split()[0],client_data['state'].to_string(index=False).split()[0])
+    client_data=df[df['customer_unique_id']==client_id]
+    avg_price=f"{client_data['price'].mean():.2f}"
+    state=BRAZIL_STATES.get(client_data['customer_state'].to_string(index=False).split()[0],client_data['customer_state'].to_string(index=False).split()[0])
     st.metric(f"Штат",f"{state}")
     st.metric(f"Средняя стоимость заказа",f"R${avg_price}")
 with col2:
-    risk = df[df["customer_id"] == client_id]["cluster"].values[0]
+    risk_ent = df[df['customer_unique_id'] == client_id]["clusters"].values[0]
+    risk = risk_ent if not pd.isna(risk_ent) else 0
+    risk=int(risk)
     if risk==-1:
         st.markdown("Недостаточно информации о клиенте")
-    elif risk<=2:
+    elif risk<=5:
         st.success("🔒 Низкий риск оттока - клиент лоялен")
         st.markdown("Вероятность оттока клиента")
-        st.progress(1/18+risk/9)
-    elif risk<=5:
+        st.progress(1/20+risk/20)
+    elif risk<=11:
         st.warning("⚠️ Средний риск оттока - требуется внимание")
         st.markdown("Вероятность оттока клиента")
-        st.progress(1/18+risk/9)
+        st.progress(1/20+risk/20)
     else:
         st.error("🚨 Высокий риск оттока - срочные действия!")
         st.markdown("Вероятность оттока клиента")
-        st.progress(1/18+risk/9)
+        st.progress(risk/20)
 
 st.markdown("---")
 
@@ -94,3 +96,4 @@ else:
     """)
 
 st.markdown("---")
+1
